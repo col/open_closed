@@ -8,6 +8,41 @@ defmodule OpenClosedTest do
     {:ok, state: %State{}}
   end
 
+  describe "main" do
+    test "play a winning game, then quit" do
+      assert capture_io("CO2\nN\n", fn ->
+        OpenClosed.main([])
+      end) == """
+      Welcome to the Open Closed Game!
+      You are the predictor, what is your input?
+      AI: CO
+      You WIN!
+      Do you want to play again? Y or N
+      Ok, bye!
+      """
+    end
+
+    test "lose, retry, and win" do
+      assert capture_io("CO4\nCO\nY\nCO2\n", fn ->
+        OpenClosed.main([])
+      end) == """
+      Welcome to the Open Closed Game!
+      You are the predictor, what is your input?
+      AI: CO
+      No winner.
+      AI is the predictor, what is your input?
+      AI: CO2
+      You LOSE!
+      Do you want to play again? Y or N
+      You are the predictor, what is your input?
+      AI: CO
+      You WIN!
+      Do you want to play again? Y or N
+      Ok, bye!
+      """
+    end
+  end
+
   describe "play_again" do
     test "prompts the user" do
       assert capture_io("\n", fn ->
@@ -41,7 +76,17 @@ defmodule OpenClosedTest do
       capture_io("CC2\n", fn ->
         state = OpenClosed.get_player_input(state)
         assert state.player_input == "CC2"
-      end) == "You are the predictor, what is your input?\n"
+      end)
+    end
+
+    test "prints an error when input is invalid and re-prompts the user", %{state: state} do
+      assert capture_io("chicken\nCO2\n", fn ->
+        OpenClosed.get_player_input(state)
+      end) == """
+      You are the predictor, what is your input?
+      Invalid input
+      You are the predictor, what is your input?
+      """
     end
   end
 
@@ -99,10 +144,6 @@ defmodule OpenClosedTest do
     test "returns an error if prediction provided when not predictor" do
       assert {:error, "Invalid input"} = OpenClosed.validate_input("CO1", :ai)
     end
-  end
-
-  describe "parse_input when player is NOT predictor" do
-
   end
 
   defp player_is_predictor(%{state: state}) do

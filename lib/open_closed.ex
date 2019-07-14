@@ -7,69 +7,56 @@ defmodule OpenClosed do
 
   def main(_args) do
     IO.puts("Welcome to the Open Closed Game!")
-    run()
+    run(%State{})
   end
 
-  def run(state \\ %State{}, io \\ IO) do
+  def run(state) do
     play_round(state)
     case play_again?() do
-      true ->
-        run(%State{}, io)
-      _ ->
-        io.puts "Ok, bye!"
+      true -> run(%State{})
+      _ -> IO.puts "Ok, bye!"
     end
   end
 
-  def play_round(state, io \\ IO) do
+  def play_round(state) do
     state = state
       |> get_player_input()
       |> get_ai_input()
 
-    io.puts "AI: #{state.ai_input}"
+    IO.puts "AI: #{state.ai_input}"
 
     if State.winner?(state) do
-      output_winner(state, io)
+      IO.puts winner_message(state)
     else
-      io.puts "No winner."
+      IO.puts "No winner."
       State.switch_predictor(state)
-        |> play_round(io)
+        |> play_round()
     end
   end
 
-  def output_winner(state, io \\ IO)
-  def output_winner(%{predictor: :player}, io), do: io.puts "You WIN!"
-  def output_winner(%{predictor: :ai}, io), do: io.puts "You LOSE!"
-
-  def play_again?(io \\ IO) do
-    input = "Do you want to play again? Y or N\n"
-      |> io.gets()
-      |> String.trim()
-    input == "Y"
+  def play_again?() do
+    case IO.gets("Do you want to play again? Y or N\n") do
+      :eof -> false
+      input -> String.trim(input) == "Y"
+    end
   end
 
-  def get_player_input(state, io \\ IO) do
+  def get_player_input(state) do
     input = input_prompt(state.predictor)
-      |> io.gets()
+      |> IO.gets()
       |> String.trim()
     case validate_input(input, state.predictor) do
       {:ok, input} ->
         State.set_player_input(state, input)
       {:error, message} ->
-        io.puts message
-        get_player_input(state, io)
+        IO.puts message
+        get_player_input(state)
     end
   end
 
-  def get_ai_input(state, _io \\ IO) do
-    input = random_input_char()<>random_input_char()
-    case state.predictor do
-      :player -> State.set_ai_input(state, input)
-      :ai -> State.set_ai_input(state, input<>random_prediction())
-    end
+  def get_ai_input(state) do
+    State.set_ai_input(state, OpenClosed.AI.get_input(state.predictor))
   end
-
-  defp random_input_char(), do: String.at("CO", :rand.uniform(2)-1)
-  defp random_prediction(), do: String.at("1234", :rand.uniform(4)-1)
 
   def input_prompt(:player), do: "You are the predictor, what is your input?\n"
   def input_prompt(:ai), do: "AI is the predictor, what is your input?\n"
@@ -85,4 +72,17 @@ defmodule OpenClosed do
         {:ok, input}
     end
   end
+
+  @doc """
+  Returns the winning message
+
+  ## Examples
+      iex> OpenClosed.winner_message(%State{predictor: :player})
+      "You WIN!"
+
+      iex> OpenClosed.winner_message(%State{predictor: :ai})
+      "You LOSE!"
+  """
+  def winner_message(%{predictor: :player}), do: "You WIN!"
+  def winner_message(%{predictor: :ai}), do: "You LOSE!"
 end
