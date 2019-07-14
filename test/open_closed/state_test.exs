@@ -1,6 +1,7 @@
 defmodule OpenClosed.StateTest do
   use ExUnit.Case
   alias OpenClosed.State
+  doctest OpenClosed.State
 
   describe "winner?" do
     test "returns true when the players prediction is correct" do
