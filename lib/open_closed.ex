@@ -6,7 +6,7 @@ defmodule OpenClosed do
   alias OpenClosed.State
 
   def main(_args) do
-    @output.puts("Welcome to the Open Closed Game!")
+    IO.puts("Welcome to the Open Closed Game!")
     run()
   end
 
@@ -14,41 +14,46 @@ defmodule OpenClosed do
     play_round(state)
     case play_again?() do
       true ->
-        run()
+        run(%State{}, io)
       _ ->
         io.puts "Ok, bye!"
     end
   end
 
-  def play_round(state) do
-    state
+  def play_round(state, io \\ IO) do
+    state = state
       |> get_player_input()
       |> get_ai_input()
-      |> calc_winner()
 
-    if !state.winner do
-      State.set_predictor(state, !state.predictor) |> play_round()
+    io.puts "AI: #{state.ai_input}"
+
+    if State.winner?(state) do
+      output_winner(state, io)
+    else
+      io.puts "No winner."
+      State.set_predictor(state, !state.predictor)
+      |> play_round(io)
     end
   end
 
-  # tested
+  def output_winner(state, io \\ IO)
+  def output_winner(%{predictor: true}, io), do: io.puts "You WIN!"
+  def output_winner(%{predictor: false}, io), do: io.puts "You LOSE!"
+
   def play_again?(io \\ IO) do
-    input = io.gets "Do you want to play again? Y or N\n"
+    input = "Do you want to play again? Y or N\n"
+      |> io.gets()
+      |> String.trim()
     input == "Y"
   end
 
-  def calc_winner(state = %{predictor: true}) do
-    winner = State.num_open(state) == state.prediction
-    State.set_winner(state, winner)
-  end
-
   def get_player_input(state, io \\ IO) do
-    input = io.gets input_prompt(state.predictor)
-    case parse_input(input, state.predictor) do
-      {:ok, opened, prediction} ->
-        state
-          |> State.set_player_input(opened)
-          |> State.set_prediction(prediction)
+    input = input_prompt(state.predictor)
+      |> io.gets()
+      |> String.trim()
+    case validate_input(input, state.predictor) do
+      {:ok, input} ->
+        State.set_player_input(state, input)
       {:error, message} ->
         io.puts message
         get_player_input(state, io)
@@ -56,35 +61,30 @@ defmodule OpenClosed do
   end
 
   def get_ai_input(state, _io \\ IO) do
-    state
-      |> State.set_ai_input(2)
-      |> State.set_prediction(2)
+    input = random_input_char()<>random_input_char()
+    case state.predictor do
+      true ->
+        State.set_ai_input(state, input)
+      false ->
+        State.set_ai_input(state, input<>random_prediction())
+    end
   end
+
+  defp random_input_char(), do: String.at("CO", :rand.uniform(2)-1)
+  defp random_prediction(), do: String.at("1234", :rand.uniform(4)-1)
 
   def input_prompt(true), do: "You are the predictor, what is your input?\n"
   def input_prompt(false), do: "AI is the predictor, what is your input?\n"
 
-  def input_regex(predictor), do: ~r/[C|O][C|O]/
-  def input_regex(predictor), do: ~r/[C|O][C|O][1-4]/
+  def input_regex(false), do: ~r/^[C|O][C|O]\Z/
+  def input_regex(true), do: ~r/^[C|O][C|O][1-4]\Z/
 
-  def parse_input(input, predictor) when is_binary(input) do
+  def validate_input(input, predictor) when is_binary(input) do
     case String.match?(input, input_regex(predictor)) do
       false ->
         {:error, "Invalid input"}
       true ->
-        {:ok, num_open(input), prediction(input, predictor)}
+        {:ok, input}
     end
-  end
-  def parse_input(_input, _predictor), do: {:error, "Invalid input"}
-
-  def prediction(input, true) do
-    input |> String.last() |> String.to_integer()
-  end
-  def prediction(_input, _predictor), do: nil
-
-  def num_open(input) do
-    input
-      |> String.to_charlist()
-      |> Enum.count(fn item -> [item] == 'O' end)
   end
 end

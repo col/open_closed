@@ -2,9 +2,38 @@ defmodule OpenClosed.StateTest do
   use ExUnit.Case
   alias OpenClosed.State
 
-  test "set_player_input/2" do
-    state = %State{player_input: "XX"}
-    state = State.set_player_input(state, "CC")
-    assert state.player_input == "CC"
+  describe "winner?" do
+    test "returns true when the players prediction is correct" do
+      state = %State{player_input: "CO2", ai_input: "CO", predictor: true}
+      assert State.winner?(state) == true
+    end
+
+    test "returns false when the players prediction is incorrect" do
+      state = %State{player_input: "CO4", ai_input: "CO", predictor: true}
+      assert State.winner?(state) == false
+    end
+
+    test "returns true when the AI prediction is correct" do
+      state = %State{player_input: "CO", ai_input: "CO2", predictor: false}
+      assert State.winner?(state) == true
+    end
+
+    test "returns false when the AI prediction is incorrect" do
+      state = %State{player_input: "CO", ai_input: "CO4", predictor: false}
+      assert State.winner?(state) == false
+    end
   end
+
+  describe "prediction" do
+    test "returns the prediction from the player_input when predictor" do
+      state = %State{player_input: "CO1", ai_input: "CO", predictor: true}
+      assert State.prediction(state) == 1
+    end
+
+    test "returns the prediction from the ai_input when NOT predictor" do
+      state = %State{player_input: "CO", ai_input: "CO2", predictor: false}
+      assert State.prediction(state) == 2
+    end
+  end
+
 end

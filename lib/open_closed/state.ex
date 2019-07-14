@@ -1,6 +1,6 @@
 defmodule OpenClosed.State do
 
-  defstruct predictor: true, prediction: nil, player_input: nil, ai_input: nil, winner: nil
+  defstruct predictor: true, player_input: nil, ai_input: nil
 
   @doc """
   Set the players input
@@ -24,19 +24,41 @@ defmodule OpenClosed.State do
     Map.put(state, :ai_input, value)
   end
 
-  def set_winner(state, value) do
-    Map.put(state, :winner, value)
-  end
+  @doc """
+  Sets the predictor flag
 
+  ## Examples
+      iex> State.set_predictor(%State{}, false)
+      %State{predictor: false}
+  """
   def set_predictor(state, value) do
     Map.put(state, :predictor, value)
   end
 
-  def set_prediction(state, value) do
-    Map.put(state, :prediction, value)
+  def winner?(state) do
+    total_open(state) == prediction(state)
   end
 
-  def num_open(state, value) do
-    2 # TODO: num_open
+  defp total_open(state) do
+    parse_num_open(state.player_input) + parse_num_open(state.ai_input)
+  end
+
+  def prediction(state) do
+    case state.predictor do
+      true ->
+        parse_prediction(state.player_input)
+      false ->
+        parse_prediction(state.ai_input)
+    end
+  end
+
+  defp parse_num_open(input) do
+    input
+      |> String.to_charlist()
+      |> Enum.count(fn item -> [item] == 'O' end)
+  end
+
+  defp parse_prediction(input) do
+    input |> String.last() |> String.to_integer()
   end
 end
