@@ -31,14 +31,14 @@ defmodule OpenClosed do
       output_winner(state, io)
     else
       io.puts "No winner."
-      State.set_predictor(state, !state.predictor)
-      |> play_round(io)
+      State.switch_predictor(state)
+        |> play_round(io)
     end
   end
 
   def output_winner(state, io \\ IO)
-  def output_winner(%{predictor: true}, io), do: io.puts "You WIN!"
-  def output_winner(%{predictor: false}, io), do: io.puts "You LOSE!"
+  def output_winner(%{predictor: :player}, io), do: io.puts "You WIN!"
+  def output_winner(%{predictor: :ai}, io), do: io.puts "You LOSE!"
 
   def play_again?(io \\ IO) do
     input = "Do you want to play again? Y or N\n"
@@ -63,21 +63,19 @@ defmodule OpenClosed do
   def get_ai_input(state, _io \\ IO) do
     input = random_input_char()<>random_input_char()
     case state.predictor do
-      true ->
-        State.set_ai_input(state, input)
-      false ->
-        State.set_ai_input(state, input<>random_prediction())
+      :player -> State.set_ai_input(state, input)
+      :ai -> State.set_ai_input(state, input<>random_prediction())
     end
   end
 
   defp random_input_char(), do: String.at("CO", :rand.uniform(2)-1)
   defp random_prediction(), do: String.at("1234", :rand.uniform(4)-1)
 
-  def input_prompt(true), do: "You are the predictor, what is your input?\n"
-  def input_prompt(false), do: "AI is the predictor, what is your input?\n"
+  def input_prompt(:player), do: "You are the predictor, what is your input?\n"
+  def input_prompt(:ai), do: "AI is the predictor, what is your input?\n"
 
-  def input_regex(false), do: ~r/^[C|O][C|O]\Z/
-  def input_regex(true), do: ~r/^[C|O][C|O][1-4]\Z/
+  def input_regex(:player), do: ~r/^[C|O][C|O][1-4]\Z/
+  def input_regex(:ai), do: ~r/^[C|O][C|O]\Z/
 
   def validate_input(input, predictor) when is_binary(input) do
     case String.match?(input, input_regex(predictor)) do

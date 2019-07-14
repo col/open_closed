@@ -1,6 +1,6 @@
 defmodule OpenClosed.State do
 
-  defstruct predictor: true, player_input: nil, ai_input: nil
+  defstruct predictor: :player, player_input: nil, ai_input: nil
 
   @doc """
   Set the players input
@@ -17,22 +17,28 @@ defmodule OpenClosed.State do
   Set the AI input
 
   ## Examples
-      iex> State.set_ai_input(%State{}, "OO")
-      %State{ai_input: "OO"}
+      iex> State.set_ai_input(%State{}, "CO")
+      %State{ai_input: "CO"}
   """
   def set_ai_input(state, value) do
     Map.put(state, :ai_input, value)
   end
 
   @doc """
-  Sets the predictor flag
+  Switches the predictor from :player to :ai or vice versa
 
   ## Examples
-      iex> State.set_predictor(%State{}, false)
-      %State{predictor: false}
+      iex> State.switch_predictor(%State{predictor: :player})
+      %State{predictor: :ai}
+
+      iex> State.switch_predictor(%State{predictor: :ai})
+      %State{predictor: :player}
   """
-  def set_predictor(state, value) do
-    Map.put(state, :predictor, value)
+  def switch_predictor(state) do
+    case state.predictor do
+      :player -> Map.put(state, :predictor, :ai)
+      :ai -> Map.put(state, :predictor, :player)
+    end
   end
 
   def winner?(state) do
@@ -45,10 +51,8 @@ defmodule OpenClosed.State do
 
   def prediction(state) do
     case state.predictor do
-      true ->
-        parse_prediction(state.player_input)
-      false ->
-        parse_prediction(state.ai_input)
+      :player -> parse_prediction(state.player_input)
+      :ai -> parse_prediction(state.ai_input)
     end
   end
 

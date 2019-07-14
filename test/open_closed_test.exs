@@ -57,47 +57,47 @@ defmodule OpenClosedTest do
 
   describe "validate_input" do
     test "parses 'CC'" do
-      assert {:ok, "CC"} = OpenClosed.validate_input("CC", false)
+      assert {:ok, "CC"} = OpenClosed.validate_input("CC", :ai)
     end
 
     test "parses 'CO'" do
-      assert {:ok, "CO"} = OpenClosed.validate_input("CO", false)
+      assert {:ok, "CO"} = OpenClosed.validate_input("CO", :ai)
     end
 
     test "parses 'OC'" do
-      assert {:ok, "OC"} = OpenClosed.validate_input("OC", false)
+      assert {:ok, "OC"} = OpenClosed.validate_input("OC", :ai)
     end
 
     test "parses 'OO'" do
-      assert {:ok, "OO"} = OpenClosed.validate_input("OO", false)
+      assert {:ok, "OO"} = OpenClosed.validate_input("OO", :ai)
     end
 
     test "parses 'CC1'" do
-      assert {:ok, "CC1"} = OpenClosed.validate_input("CC1", true)
+      assert {:ok, "CC1"} = OpenClosed.validate_input("CC1", :player)
     end
 
     test "parses 'CO2'" do
-      assert {:ok, "CO2"} = OpenClosed.validate_input("CO2", true)
+      assert {:ok, "CO2"} = OpenClosed.validate_input("CO2", :player)
     end
 
     test "parses 'OC3'" do
-      assert {:ok, "OC3"} = OpenClosed.validate_input("OC3", true)
+      assert {:ok, "OC3"} = OpenClosed.validate_input("OC3", :player)
     end
 
     test "parses 'OO4'" do
-      assert {:ok, "OO4"} = OpenClosed.validate_input("OO4", true)
+      assert {:ok, "OO4"} = OpenClosed.validate_input("OO4", :player)
     end
 
     test "returns an error for invalid input" do
-      assert {:error, "Invalid input"} = OpenClosed.validate_input("chicken", false)
+      assert {:error, "Invalid input"} = OpenClosed.validate_input("chicken", :ai)
     end
 
     test "returns an error when the prediction is missing" do
-      assert {:error, "Invalid input"} = OpenClosed.validate_input("CO", true)
+      assert {:error, "Invalid input"} = OpenClosed.validate_input("CO", :player)
     end
 
     test "returns an error if prediction provided when not predictor" do
-      assert {:error, "Invalid input"} = OpenClosed.validate_input("CO1", false)
+      assert {:error, "Invalid input"} = OpenClosed.validate_input("CO1", :ai)
     end
   end
 
@@ -106,10 +106,10 @@ defmodule OpenClosedTest do
   end
 
   defp player_is_predictor(%{state: state}) do
-    {:ok, state: State.set_predictor(state, true)}
+    {:ok, state: Map.put(state, :predictor, :player)}
   end
 
   defp ai_is_predictor(%{state: state}) do
-    {:ok, state: State.set_predictor(state, false)}
+    {:ok, state: Map.put(state, :predictor, :ai)}
   end
 end
